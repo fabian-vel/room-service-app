@@ -16,6 +16,7 @@ import {FloatingButtonComponent} from "@/shared/components/FloatingButtonCompone
 import {ShopCartSheetComponent} from "@/shared/components/ShopCartSheetComponent";
 import {OrderRequest} from "@/types/OrderRequest";
 import {createOrder} from "@/features/menu-details/service/PedidoService";
+import {useOrderStore} from "@/shared/store/orderStore";
 
 interface Props {
     submenuId: number;
@@ -109,6 +110,7 @@ export const MenuDetailsScreen = ({submenuId, submenuName, onBack}: Props) => {
     const setOrder = async (body: OrderRequest) => {
         try {
             const message = await createOrder(body);
+            useOrderStore.getState().fetchOrders();
             setAlert({
                 visible: true,
                 alertType: 'success',

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useOrderStore} from "@/shared/store/orderStore";
 
 interface AuthState {
     token: string | null;
@@ -19,6 +20,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
     clearToken: async () => {
         await AsyncStorage.removeItem('token');
+        useOrderStore.getState().clearOrders();
         set({ token: null, isAuthenticated: false });
     },
 }));

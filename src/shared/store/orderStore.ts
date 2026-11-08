@@ -4,10 +4,13 @@ import {Order} from "@/types/Order";
 
 interface OrderState {
     orders: Order[];
+    /** solo en la primera carga; al refrescar se siguen mostrando los pedidos que ya hay */
     loadingOrder: boolean;
     errorOrder: string | null;
-    /** forzar: vuelve a consultar aunque ya haya pedidos cargados */
-    fetchOrders: (forzar?: boolean) => Promise<void>;
+    /** siempre consulta al API: la cocina pudo cambiar el estado desde la última vez */
+    fetchOrders: () => Promise<void>;
+    /** al cerrar sesión, para que otra habitación no vea estos pedidos */
+    clearOrders: () => void;
 }
 
 export const useOrderStore = create<OrderState>((set, get) => ({
@@ -15,9 +18,8 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     loadingOrder: false,
     errorOrder: null,
 
-    fetchOrders: async (forzar = false) => {
-        if (!forzar && get().orders.length > 0) return;
-        set({ loadingOrder: true });
+    fetchOrders: async () => {
+        if (get().orders.length === 0) set({ loadingOrder: true });
         try {
             const data = await getOrders();
             set({ orders: data });
@@ -26,5 +28,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         } finally {
             set({ loadingOrder: false });
         }
-    }
+    },
+
+    clearOrders: () => set({ orders: [], errorOrder: null }),
 }));

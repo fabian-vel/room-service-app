@@ -1,6 +1,6 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {Text, View} from "react-native";
+import {RefreshControl, ScrollView, Text} from "react-native";
 import {OrderCardComponent} from "@/features/order/components/OrderCardComponent";
 import {OrderDetailSheetComponent} from "@/features/order/components/OrderDetailSheetComponent";
 import {Order} from "@/types/Order";
@@ -13,6 +13,19 @@ export function OrderScreen() {
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const [alert, setAlert] = useState<AlertState>({visible: false});
     const cerrarAlerta = () => setAlert({visible: false});
+    const [refrescando, setRefrescando] = useState(false);
+    const fetchOrders = useOrderStore((state) => state.fetchOrders);
+
+    // cada vez que se entra a la pestaña: la cocina pudo cambiar el estado
+    useEffect(() => {
+        fetchOrders();
+    }, [fetchOrders]);
+
+    const refrescar = async () => {
+        setRefrescando(true);
+        await fetchOrders();
+        setRefrescando(false);
+    };
 
     const handleCancelOrder = (order: Order) => {
         // se cierra el panel para no apilar el modal de confirmación sobre él
@@ -53,18 +66,21 @@ export function OrderScreen() {
             });
         } finally {
             // en ambos casos el estado pudo cambiar: se recarga la lista
-            useOrderStore.getState().fetchOrders(true);
+            useOrderStore.getState().fetchOrders();
         }
     };
 
     return (
         <SafeAreaView style={{flex: 1, backgroundColor: '#fcf8f6'}} edges={['top', 'left', 'right']}>
-            <View className="flex-1 p-6">
+            <ScrollView
+                contentContainerClassName="p-6"
+                refreshControl={<RefreshControl refreshing={refrescando} onRefresh={refrescar}/>}
+            >
                 <Text className="text-2xl font-medium text-stone-900 tracking-wide mb-4">
                     Tus pedidos
                 </Text>
                 <OrderCardComponent onPress={(order) => setSelectedOrder(order)} />
-            </View>
+            </ScrollView>
             <OrderDetailSheetComponent
                 visible={selectedOrder !== null}
                 onClose={() => setSelectedOrder(null)}
