@@ -6,7 +6,8 @@ interface OrderState {
     orders: Order[];
     loadingOrder: boolean;
     errorOrder: string | null;
-    fetchOrders: () => Promise<void>;
+    /** forzar: vuelve a consultar aunque ya haya pedidos cargados */
+    fetchOrders: (forzar?: boolean) => Promise<void>;
 }
 
 export const useOrderStore = create<OrderState>((set, get) => ({
@@ -14,8 +15,8 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     loadingOrder: false,
     errorOrder: null,
 
-    fetchOrders: async () => {
-        if (get().orders.length > 0) return;
+    fetchOrders: async (forzar = false) => {
+        if (!forzar && get().orders.length > 0) return;
         set({ loadingOrder: true });
         try {
             const data = await getOrders();

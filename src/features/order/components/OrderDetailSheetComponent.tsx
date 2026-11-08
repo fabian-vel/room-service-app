@@ -1,6 +1,6 @@
 import React from "react";
 import {BottomSheetComponent} from "@/shared/components/BottomSheetComponent";
-import {Dimensions, ScrollView, Text, View} from "react-native";
+import {Dimensions, ScrollView, Text, TouchableOpacity, View} from "react-native";
 import {Order} from "@/types/Order";
 import {getOrderStatusStyle} from "@/shared/util/orderStatusUtil";
 import {getFormatFecha} from "@/shared/util/formatFechaUtil";
@@ -11,9 +11,12 @@ interface OrderDetailSheetComponentProps {
     visible: boolean;
     onClose: () => void;
     order: Order | null;
+    onCancelOrder: (order: Order) => void;
 }
 
-export function OrderDetailSheetComponent({visible, onClose, order}: Readonly<OrderDetailSheetComponentProps>) {
+const ESTADO_PENDIENTE = 1;
+
+export function OrderDetailSheetComponent({visible, onClose, order, onCancelOrder}: Readonly<OrderDetailSheetComponentProps>) {
     const {height} = Dimensions.get('window');
     const SNAP_60 = height * 0.6;  // 60%
 
@@ -67,6 +70,15 @@ export function OrderDetailSheetComponent({visible, onClose, order}: Readonly<Or
                 <Text className="line-clamp-2 text-stone-400">
                     {order.pediObservacion || 'Sin notas adicionales'}
                 </Text>
+                {/* solo se puede cancelar mientras la cocina no lo haya empezado */}
+                {order.espeId === ESTADO_PENDIENTE && (
+                    <TouchableOpacity
+                        className="mt-6 border border-red-500 rounded-full py-3 items-center"
+                        onPress={() => onCancelOrder(order)}
+                    >
+                        <Text className="text-red-500 font-medium">Cancelar pedido</Text>
+                    </TouchableOpacity>
+                )}
             </View>
         </BottomSheetComponent>
     );
