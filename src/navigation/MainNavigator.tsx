@@ -1,4 +1,7 @@
-import {useState} from "react";
+import {useCallback, useEffect, useState} from "react";
+import {OrderStatusBanner, OrderStatusBannerComponent} from "@/shared/components/OrderStatusBannerComponent";
+import {conectarEventosPedido} from "@/shared/api/orderSocket";
+import {useOrderStore} from "@/shared/store/orderStore";
 import {BottomBarComponent, BottomBarTab} from "@/shared/components/BottomBarComponent";
 import {HomeScreen} from "@/features/home/screen/HomeScreen";
 import MenuScreen from "@/features/menu/screen/MenuScreen";
@@ -21,6 +24,22 @@ export function MainNavigator() {
     const [activeTab, setActiveTab] = useState<BottomBarTab>('Inicio');
     const [submenu, setSubmenu] = useState<Submenu | null>(null);
     const navigation = useNavigation<MainNavigationProp>();
+    const [banner, setBanner] = useState<OrderStatusBanner | null>(null);
+    const cerrarBanner = useCallback(() => setBanner(null), []);
+
+    // mientras haya sesión: la cocina avisa cuando cambia el estado de un pedido de la habitación
+    useEffect(() => {
+        const fetchOrders = () => useOrderStore.getState().fetchOrders();
+        return conectarEventosPedido({
+            onReconectado: fetchOrders,
+            onEvento: (evento) => {
+                fetchOrders();
+                // la cancelación la hizo el mismo huésped y ya la vio en pantalla
+                if (evento.type !== 'STATUS_CHANGED' || !evento.payload) return;
+                setBanner({id: Date.now(), pediId: evento.pedidoId, ...evento.payload});
+            },
+        });
+    }, []);
 
     const handleTabPress = (tab: BottomBarTab) => {
         setSubmenu(null);
@@ -57,6 +76,14 @@ export function MainNavigator() {
             <BottomBarComponent
                 activeTab={activeTab}
                 onTabPress={handleTabPress}
+            />
+            <OrderStatusBannerComponent
+                banner={banner}
+                onClose={cerrarBanner}
+                onPress={() => {
+                    setBanner(null);
+                    handleTabPress('Pedidos');
+                }}
             />
         </View>
     );
